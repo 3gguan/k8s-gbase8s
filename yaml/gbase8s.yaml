@@ -1,0 +1,140 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: gbase8s
+  labels:
+    name: gbase8s
+spec:
+  replicas: 1
+  selector:
+    name: gbase8s
+  template:
+    metadata:
+      labels:
+        name: gbase8s
+    spec:
+      nodeSelector:
+        node: "132"
+      containers:
+      - name: gbase8s
+        image: gbase8s:8.7
+        securityContext:
+          capabilities:
+            add: ["SYS_ADMIN"]
+        ports:
+        - name: onsoctcp
+          containerPort: 12345
+        - name: drsoctcp
+          containerPort: 12346
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "12345678"
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        volumeMounts:
+        - name: data
+          mountPath: /opt/gbase8s/storage
+        - name: logs
+          mountPath: /opt/gbase8s/logs
+        - name: conf
+          mountPath: /opt/gbase8s/etc/onconfig.ol_generaldata1210
+          subPath: onconfig.ol_generaldata1210
+        - name: conf
+          mountPath: /opt/gbase8s/etc/sqlhosts.ol_generaldata1210
+          subPath: sqlhosts.ol_generaldata1210
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: gbase8s-data
+      - name: logs
+        persistentVolumeClaim:
+          claimName: gbase8s-logs
+      - name: conf
+        configMap:
+          name: gbase8s-conf
+          items:
+            - key: onconfig.ol_generaldata1210
+              path: onconfig.ol_generaldata1210
+            - key: sqlhosts.ol_generaldata1210
+              path: sqlhosts.ol_generaldata1210
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gbase8s
+  labels:
+    name: gbase8s
+spec:
+  type: NodePort
+  ports:
+  - name: onsoctcp
+    port: 12345
+    targetPort: 12345
+    nodePort: 31111
+  - name: drsoctcp
+    port: 12346
+    targetPort: 12346
+    nodePort: 31112
+  selector:
+    name: gbase8s
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gbase8s-data
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  selector:
+    matchLabels:
+      name: gbase8s-data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gbase8s-logs
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  selector:
+    matchLabels:
+      name: gbase8s-logs
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: gbase8s-data
+  labels:
+    name: gbase8s-data
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: /gbase-data
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: gbase8s-logs
+  labels:
+    name: gbase8s-logs
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: /gbase-logs

@@ -1,0 +1,28 @@
+touch /opt/gbase8s/storage/plogdbs
+touch /opt/gbase8s/storage/llogdbs
+touch /opt/gbase8s/storage/tmpdbs01
+touch /opt/gbase8s/storage/tmpdbs02
+touch /opt/gbase8s/storage/datadbs01
+touch /opt/gbase8s/storage/datadbs02
+touch /opt/gbase8s/storage/datadbs03
+touch /opt/gbase8s/storage/datadbs04
+touch /opt/gbase8s/storage/datadbs05
+touch /opt/gbase8s/storage/datadbs06
+touch /opt/gbase8s/storage/datadbs07
+touch /opt/gbase8s/storage/datadbs08
+
+onspaces -c -d plogdbs -p /opt/gbase8s/storage/plogdbs -o 0 -s 65536
+onspaces -c -d llogdbs -p /opt/gbase8s/storage/llogdbs -o 0 -s 65536
+onspaces -c -d tmpdbs01 -p /opt/gbase8s/storage/tmpdbs01 -o 0 -s 65536
+onspaces -c -d tmpdbs02 -p /opt/gbase8s/storage/tmpdbs02 -o 0 -s 65536
+onspaces -c -d datadbs01 -p /opt/gbase8s/storage/datadbs01 -o 0 -s 65536
+onspaces -c -d datadbs02 -p /opt/gbase8s/storage/datadbs02 -o 0 -s 65536
+onspaces -c -d datadbs03 -p /opt/gbase8s/storage/datadbs03 -o 0 -s 65536
+onspaces -c -d datadbs04 -p /opt/gbase8s/storage/datadbs04 -o 0 -s 65536
+onspaces -c -d datadbs05 -p /opt/gbase8s/storage/datadbs05 -o 0 -s 65536
+onspaces -c -d datadbs06 -p /opt/gbase8s/storage/datadbs06 -o 0 -s 65536
+onspaces -c -d datadbs07 -p /opt/gbase8s/storage/datadbs07 -o 0 -s 65536
+onspaces -c -d datadbs08 -p /opt/gbase8s/storage/datadbs08 -o 0 -s 65536
+
+ol_generaldata1210 12345/tcp
+dr_generaldata1210 12346/tcp
