@@ -13,8 +13,10 @@ spec:
       labels:
         name: gbase8s
     spec:
+      securityContext:
+        fsGroup: 1000
       nodeSelector:
-        node: "132"
+        name: "master"
       containers:
       - name: gbase8s
         image: gbase8s:8.7
@@ -27,8 +29,8 @@ spec:
         - name: drsoctcp
           containerPort: 12346
         env:
-        - name: MYSQL_ROOT_PASSWORD
-          value: "12345678"
+        - name: GBASEDBT_PASSWORD
+          value: "12345678
         resources:
           requests:
             cpu: "500m"
@@ -42,6 +44,7 @@ spec:
         - name: logs
           mountPath: /opt/gbase8s/logs
         - name: conf
+          readOnly: false
           mountPath: /opt/gbase8s/etc/onconfig.ol_generaldata1210
           subPath: onconfig.ol_generaldata1210
         - name: conf

@@ -19,9 +19,8 @@ RUN yum install -y libaio-devel && useradd -m gbasedbt
 
 COPY --from=0 /opt/gbase8s /opt/gbase8s
 
-ADD conf/env.sh /opt/gbase8s/
 ADD --chown=gbasedbt:gbasedbt conf/onconfig* conf/sqlhosts* /opt/gbase8s/etc/
-ADD entrypoint.sh /
+ADD entrypoint.sh env.sh /
 
 RUN chown gbasedbt:gbasedbt /opt/gbase8s && \
 	mkdir /opt/gbase8s/storage /opt/gbase8s/logs && \
