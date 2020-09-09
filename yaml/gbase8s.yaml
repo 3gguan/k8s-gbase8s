@@ -13,8 +13,6 @@ spec:
       labels:
         name: gbase8s
     spec:
-      securityContext:
-        fsGroup: 1000
       nodeSelector:
         name: "master"
       containers:
@@ -30,7 +28,11 @@ spec:
           containerPort: 12346
         env:
         - name: GBASEDBT_PASSWORD
-          value: "12345678
+          value: "12345678"
+        - name: ONCONFIG_FILE_NAME
+          value: /conf/onconfig.ol_generaldata1210
+        - name: SQLHOSTS_FILE_NAME
+          value: /conf/sqlhosts.ol_generaldata1210
         resources:
           requests:
             cpu: "500m"
@@ -44,11 +46,10 @@ spec:
         - name: logs
           mountPath: /opt/gbase8s/logs
         - name: conf
-          readOnly: false
-          mountPath: /opt/gbase8s/etc/onconfig.ol_generaldata1210
+          mountPath: /conf/onconfig.ol_generaldata1210
           subPath: onconfig.ol_generaldata1210
         - name: conf
-          mountPath: /opt/gbase8s/etc/sqlhosts.ol_generaldata1210
+          mountPath: /conf/sqlhosts.ol_generaldata1210
           subPath: sqlhosts.ol_generaldata1210
       volumes:
       - name: data

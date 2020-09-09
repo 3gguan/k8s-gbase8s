@@ -26,7 +26,7 @@ init_dbspaces() {
 DBSPACES="rootdbs plogdbs llogdbs tmpdbs01 tmpdbs02 datadbs01 datadbs02 datadbs03 datadbs04 datadbs05 datadbs06 datadbs07 datadbs08"
 
 change_permissions() {
-  chown gbasedbt:gbasedbt $GBASEDBTDIR/logs $GBASEDBTDIR/storage
+  chown gbasedbt:gbasedbt $GBASEDBTDIR/logs $GBASEDBTDIR/storage $GBASEDBTDIR/etc/onconfig.ol_gbasedbt1210_1 $GBASEDBTDIR/etc/sqlhosts.ol_gbasedbt1210_1
 }
 
 set_gbasedbt_password() {
@@ -42,9 +42,35 @@ check_health() {
   fi
 }
 
+prepare_config_file() {
+  if [ -n $ONCONFIG_FILE_NAME ]; then
+    if [ -f $ONCONFIG_FILE_NAME ]; then
+      onconfig_file=${ONCONFIG_FILE_NAME##*/}
+      \cp $ONCONFIG_FILE_NAME $GBASEDBTDIR/etc/$onconfig_file
+      chown gbasedbt:gbasedbt $GBASEDBTDIR/etc/$onconfig_file
+      sed -i "s/ONCONFIG=*.*/ONCONFIG=$file/" /env.sh
+      temp=`sed -n "/^\s*DBSERVERNAME/p" $GBASEDBTDIR/etc/$onconfig_file` 
+      sed -i "s/GBASEDBTSERVER=*.*/GBASEDBTSERVER=${temp##* }/" /env.sh
+    else
+      echo "onconfig file not exists"
+    fi
+  fi
+  if [ -n $SQLHOSTS_FILE_NAME ]; then
+    if [ -f $SQLHOSTS_FILE_NAME ]; then
+      sqlhosts_file=${SQLHOSTS_FILE_NAME##*/}
+      \cp $SQLHOSTS_FILE_NAME $GBASEDBTDIR/etc/$sqlhosts_file
+      chown gbasedbt:gbasedbt $GBASEDBTDIR/etc/$sqlhosts_file
+      sed -i "s/GBASEDBTSQLHOSTS=*.*/GBASEDBTSQLHOSTS=\$GBASEDBTDIR\/etc\/$file/" /env.sh
+    else
+      echo "sqlhosts file not exists"
+    fi
+  fi
+}
+
 main() {
   set_gbasedbt_password
   change_permissions
+  prepare_config_file
 
   if [ -f $GBASEDBTDIR/storage/rootdbs ]; then
     oninit -vwy

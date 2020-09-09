@@ -25,8 +25,6 @@ ADD entrypoint.sh env.sh /
 RUN chown gbasedbt:gbasedbt /opt/gbase8s && \
 	mkdir /opt/gbase8s/storage /opt/gbase8s/logs && \
     chown gbasedbt:gbasedbt /opt/gbase8s/storage /opt/gbase8s/logs && \
-	echo "ol_generaldata1210 12345/tcp" >> /etc/services && \
-	echo "dr_generaldata1210 12346/tcp" >> /etc/services && \
 	chmod +x /entrypoint.sh
 
 VOLUME ["/opt/gbase8s/storage", "/opt/gbase8s/logs"]
