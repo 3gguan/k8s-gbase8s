@@ -203,8 +203,8 @@ ONDBSPACEDOWN 2
 ###################################################################
 
 SERVERNUM 100
-DBSERVERNAME ol_generaldata1210
-DBSERVERALIASES dr_generaldata1210
+DBSERVERNAME ol_gbasedbt1210_1
+DBSERVERALIASES dr_gbasedbt1210_1
 FULL_DISK_INIT 0
 
 ###################################################################

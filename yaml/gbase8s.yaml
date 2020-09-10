@@ -30,9 +30,9 @@ spec:
         - name: GBASEDBT_PASSWORD
           value: "12345678"
         - name: ONCONFIG_FILE_NAME
-          value: /conf/onconfig.ol_generaldata1210
+          value: /conf/onconfig.ol_gbasedbt1210_1
         - name: SQLHOSTS_FILE_NAME
-          value: /conf/sqlhosts.ol_generaldata1210
+          value: /conf/sqlhosts.ol_gbasedbt1210_1
         resources:
           requests:
             cpu: "500m"
@@ -46,11 +46,11 @@ spec:
         - name: logs
           mountPath: /opt/gbase8s/logs
         - name: conf
-          mountPath: /conf/onconfig.ol_generaldata1210
-          subPath: onconfig.ol_generaldata1210
+          mountPath: /conf/onconfig.ol_gbasedbt1210_1
+          subPath: onconfig.ol_gbasedbt1210_1
         - name: conf
-          mountPath: /conf/sqlhosts.ol_generaldata1210
-          subPath: sqlhosts.ol_generaldata1210
+          mountPath: /conf/sqlhosts.ol_gbasedbt1210_1
+          subPath: sqlhosts.ol_gbasedbt1210_1
       volumes:
       - name: data
         persistentVolumeClaim:
@@ -62,10 +62,10 @@ spec:
         configMap:
           name: gbase8s-conf
           items:
-            - key: onconfig.ol_generaldata1210
-              path: onconfig.ol_generaldata1210
-            - key: sqlhosts.ol_generaldata1210
-              path: sqlhosts.ol_generaldata1210
+            - key: onconfig.ol_gbasedbt1210_1
+              path: onconfig.ol_gbasedbt1210_1
+            - key: sqlhosts.ol_gbasedbt1210_1
+              path: sqlhosts.ol_gbasedbt1210_1
 ---
 apiVersion: v1
 kind: Service

@@ -1,11 +1,13 @@
 #!/bin/bash
 
-source /env.sh
+import_env() {
+  source /env.sh
 
-if [ -z $GBASEDBTDIR ]; then
-  echo "GBASEDBTDIR not exists"
-  exit 1;
-fi
+  if [ -z $GBASEDBTDIR ]; then
+    echo "GBASEDBTDIR not exists"
+    exit 1;
+  fi
+}
 
 create_dbspaces() {
   for i in $DBSPACES;
@@ -17,8 +19,8 @@ create_dbspaces() {
 init_dbspaces() {
   for i in $DBSPACES;
   do
-	if [ $i != "rootdbs" ]; then
-      onspaces -c -d $i -p $GBASEDBTDIR/storage/$i -o 0 -s 65536
+    if [ $i != "rootdbs" ]; then
+    onspaces -c -d $i -p $GBASEDBTDIR/storage/$i -o 0 -s 65536
     fi
   done
 }
@@ -48,9 +50,9 @@ prepare_config_file() {
       onconfig_file=${ONCONFIG_FILE_NAME##*/}
       \cp $ONCONFIG_FILE_NAME $GBASEDBTDIR/etc/$onconfig_file
       chown gbasedbt:gbasedbt $GBASEDBTDIR/etc/$onconfig_file
-      sed -i "s/ONCONFIG=*.*/ONCONFIG=$file/" /env.sh
+      sed -i "0,/ONCONFIG=*.*/s/ONCONFIG=*.*/ONCONFIG=$onconfig_file/" /env.sh
       temp=`sed -n "/^\s*DBSERVERNAME/p" $GBASEDBTDIR/etc/$onconfig_file` 
-      sed -i "s/GBASEDBTSERVER=*.*/GBASEDBTSERVER=${temp##* }/" /env.sh
+      sed -i "0,/GBASEDBTSERVER=*.*/s/GBASEDBTSERVER=*.*/GBASEDBTSERVER=${temp##* }/" /env.sh
     else
       echo "onconfig file not exists"
     fi
@@ -60,7 +62,7 @@ prepare_config_file() {
       sqlhosts_file=${SQLHOSTS_FILE_NAME##*/}
       \cp $SQLHOSTS_FILE_NAME $GBASEDBTDIR/etc/$sqlhosts_file
       chown gbasedbt:gbasedbt $GBASEDBTDIR/etc/$sqlhosts_file
-      sed -i "s/GBASEDBTSQLHOSTS=*.*/GBASEDBTSQLHOSTS=\$GBASEDBTDIR\/etc\/$file/" /env.sh
+      sed -i "0,/GBASEDBTSQLHOSTS=*.*/s/GBASEDBTSQLHOSTS=*.*/GBASEDBTSQLHOSTS=\$GBASEDBTDIR\/etc\/$sqlhosts_file/" /env.sh
     else
       echo "sqlhosts file not exists"
     fi
@@ -69,8 +71,10 @@ prepare_config_file() {
 
 main() {
   set_gbasedbt_password
-  change_permissions
+  import_env
   prepare_config_file
+  import_env
+  change_permissions
 
   if [ -f $GBASEDBTDIR/storage/rootdbs ]; then
     oninit -vwy
