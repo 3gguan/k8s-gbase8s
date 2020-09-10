@@ -45,7 +45,7 @@ check_health() {
 }
 
 prepare_config_file() {
-  if [ -n $ONCONFIG_FILE_NAME ]; then
+  if [ -n "$ONCONFIG_FILE_NAME" ]; then
     if [ -f $ONCONFIG_FILE_NAME ]; then
       onconfig_file=${ONCONFIG_FILE_NAME##*/}
       \cp $ONCONFIG_FILE_NAME $GBASEDBTDIR/etc/$onconfig_file
@@ -57,7 +57,7 @@ prepare_config_file() {
       echo "onconfig file not exists"
     fi
   fi
-  if [ -n $SQLHOSTS_FILE_NAME ]; then
+  if [ -n "$SQLHOSTS_FILE_NAME" ]; then
     if [ -f $SQLHOSTS_FILE_NAME ]; then
       sqlhosts_file=${SQLHOSTS_FILE_NAME##*/}
       \cp $SQLHOSTS_FILE_NAME $GBASEDBTDIR/etc/$sqlhosts_file

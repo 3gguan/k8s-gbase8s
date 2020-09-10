@@ -14,7 +14,7 @@ spec:
         name: gbase8s
     spec:
       nodeSelector:
-        name: "master"
+        name: "node1"
       containers:
       - name: gbase8s
         image: gbase8s:8.7
@@ -28,7 +28,10 @@ spec:
           containerPort: 12346
         env:
         - name: GBASEDBT_PASSWORD
-          value: "12345678"
+          valueFrom:
+            secretKeyRef:
+              name: gbase8s-secret
+              key: password
         - name: ONCONFIG_FILE_NAME
           value: /conf/onconfig.ol_gbasedbt1210_1
         - name: SQLHOSTS_FILE_NAME
