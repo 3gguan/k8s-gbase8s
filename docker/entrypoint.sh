@@ -28,7 +28,7 @@ init_dbspaces() {
 DBSPACES="rootdbs plogdbs llogdbs tmpdbs01 tmpdbs02 datadbs01 datadbs02 datadbs03 datadbs04 datadbs05 datadbs06 datadbs07 datadbs08"
 
 change_permissions() {
-  chown gbasedbt:gbasedbt $GBASEDBTDIR/logs $GBASEDBTDIR/storage $GBASEDBTDIR/etc/onconfig.ol_gbasedbt1210_1 $GBASEDBTDIR/etc/sqlhosts.ol_gbasedbt1210_1
+  chown gbasedbt:gbasedbt $GBASEDBTDIR/logs $GBASEDBTDIR/storage $GBASEDBTDIR/etc/onconfig.ol_gbasedbt_1 $GBASEDBTDIR/etc/sqlhosts.ol_gbasedbt_1
 }
 
 set_gbasedbt_password() {

@@ -203,8 +203,8 @@ ONDBSPACEDOWN 2
 ###################################################################
 
 SERVERNUM 100
-DBSERVERNAME ol_gbasedbt1210_1
-DBSERVERALIASES dr_gbasedbt1210_1
+DBSERVERNAME ol_gbasedbt_1
+DBSERVERALIASES dr_gbasedbt_1
 FULL_DISK_INIT 0
 
 ###################################################################
@@ -1421,7 +1421,7 @@ WSTATS 0
 #	    privileged users 
 ####################################################################
 
-USERMAPPING OFF
+USERMAPPING ADMIN
 
 ###################################################################
 # Storage Provisioning Parameters

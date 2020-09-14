@@ -17,15 +17,15 @@ spec:
         name: "node1"
       containers:
       - name: gbase8s
-        image: gbase8s:8.7
+        image: gbase8s:8.8
         securityContext:
           capabilities:
             add: ["SYS_ADMIN"]
         ports:
         - name: onsoctcp
-          containerPort: 12345
+          containerPort: 9088
         - name: drsoctcp
-          containerPort: 12346
+          containerPort: 19088
         env:
         - name: GBASEDBT_PASSWORD
           valueFrom:
@@ -33,9 +33,9 @@ spec:
               name: gbase8s-secret
               key: password
         - name: ONCONFIG_FILE_NAME
-          value: /conf/onconfig.ol_gbasedbt1210_1
+          value: /conf/onconfig.ol_gbasedbt_1
         - name: SQLHOSTS_FILE_NAME
-          value: /conf/sqlhosts.ol_gbasedbt1210_1
+          value: /conf/sqlhosts.ol_gbasedbt_1
         resources:
           requests:
             cpu: "500m"
@@ -49,11 +49,14 @@ spec:
         - name: logs
           mountPath: /opt/gbase8s/logs
         - name: conf
-          mountPath: /conf/onconfig.ol_gbasedbt1210_1
-          subPath: onconfig.ol_gbasedbt1210_1
+          mountPath: /conf/onconfig.ol_gbasedbt_1
+          subPath: onconfig.ol_gbasedbt_1
         - name: conf
-          mountPath: /conf/sqlhosts.ol_gbasedbt1210_1
-          subPath: sqlhosts.ol_gbasedbt1210_1
+          mountPath: /conf/sqlhosts.ol_gbasedbt_1
+          subPath: sqlhosts.ol_gbasedbt_1
+        - name: conf
+          mountPath: /etc/gbasedbt/allowed.surrogates
+          subPath: allowed.surrogates
       volumes:
       - name: data
         persistentVolumeClaim:
@@ -65,10 +68,12 @@ spec:
         configMap:
           name: gbase8s-conf
           items:
-            - key: onconfig.ol_gbasedbt1210_1
-              path: onconfig.ol_gbasedbt1210_1
-            - key: sqlhosts.ol_gbasedbt1210_1
-              path: sqlhosts.ol_gbasedbt1210_1
+            - key: onconfig.ol_gbasedbt_1
+              path: onconfig.ol_gbasedbt_1
+            - key: sqlhosts.ol_gbasedbt_1
+              path: sqlhosts.ol_gbasedbt_1
+            - key: allowed.surrogates
+              path: allowed.surrogates
 ---
 apiVersion: v1
 kind: Service
@@ -80,12 +85,12 @@ spec:
   type: NodePort
   ports:
   - name: onsoctcp
-    port: 12345
-    targetPort: 12345
+    port: 9088
+    targetPort: 9088
     nodePort: 31111
   - name: drsoctcp
-    port: 12346
-    targetPort: 12346
+    port: 19088
+    targetPort: 19088
     nodePort: 31112
   selector:
     name: gbase8s
