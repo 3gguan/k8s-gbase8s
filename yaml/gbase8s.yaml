@@ -36,6 +36,10 @@ spec:
           value: /conf/onconfig.ol_gbasedbt_1
         - name: SQLHOSTS_FILE_NAME
           value: /conf/sqlhosts.ol_gbasedbt_1
+        - name: DB_LOCALE
+          value: zh_cn.utf8
+        - name: CLIENT_LOCALE
+          value: zh_cn.utf8
         resources:
           requests:
             cpu: "500m"
