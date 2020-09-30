@@ -14,7 +14,7 @@ spec:
         name: gbase8s
     spec:
       nodeSelector:
-        name: "node1"
+        name: "master"
       containers:
       - name: gbase8s
         image: gbase8s:8.8

@@ -1,0 +1,149 @@
+apiVersion: v1
+kind: ReplicationController #rc定义
+metadata:
+  name: gbase8s #rc名称，可根据实际修改
+  labels: #rc标签，可根据实际修改
+    name: gbase8s
+spec:
+  replicas: 1 #启动的pod数量，目前只支持1个
+  selector: #定义rc的标签选择器,rc通过这个标签选择要控制的pod，要和pod的标签一致
+    name: gbase8s
+  template: #定义pod模版
+    metadata:
+      labels: #定义pod label,要和rc的标签选择器一致
+        name: gbase8s
+    spec:
+      nodeSelector: #定义node选择器，使pod固定到某个节点，需要根据实际修改
+        name: "master"
+      containers: #定义容器
+      - name: gbase8s #容器名字，可根据实际修改
+        image: gbase8s:8.8 #gbase8s镜像名字，可根据实际修改
+        securityContext: #定义容器的访问控制权限，如onmode -ky需要系统管理员权限，目前只需要添加SYS_ADMIN权限就可以
+          capabilities:
+            add: ["SYS_ADMIN"]
+        ports: #容器对外开放的端口，固定
+        - name: onsoctcp
+          containerPort: 9088
+        - name: drsoctcp
+          containerPort: 19088
+        env: #一些环境变量的定义
+        - name: GBASEDBT_PASSWORD #gbasedbt用户的密码，需要先创建secret
+          valueFrom:
+            secretKeyRef:
+              name: gbase8s-secret
+              key: password
+        - name: ONCONFIG_FILE_NAME #指定onconfig文件在容器内挂载的位置，需要根据挂载位置修改
+          value: /conf/onconfig.ol_gbasedbt_1
+        - name: SQLHOSTS_FILE_NAME #制定sqlhost文件在容器内挂载的位置，需要根据挂载位置修改
+          value: /conf/sqlhosts.ol_gbasedbt_1
+        - name: DB_LOCALE #gbase8s服务端的语言环境，可根据需要修改
+          value: zh_cn.utf8
+        - name: CLIENT_LOCALE #gbase8s客户端的语言环境，可根据需要修改
+          value: zh_cn.utf8
+        volumeMounts: #定义挂载点
+        - name: data #数据卷名，跟定义的名称要一致
+          mountPath: /opt/gbase8s/storage #数据持久化的挂载点，不能修改
+        - name: logs #日志卷名，跟定义的名称要一致
+          mountPath: /opt/gbase8s/logs #日志持久化的挂载点，不能修改
+        - name: conf #配置卷名，跟定义的名称要一致
+          mountPath: /conf/onconfig.ol_gbasedbt_1 #onconfig文件的挂载点，可修改，修改后要和ONCONFIG_FILE_NAME环境变量一致
+          subPath: onconfig.ol_gbasedbt_1
+        - name: conf #配置卷名，跟定义的名称要一致
+          mountPath: /conf/sqlhosts.ol_gbasedbt_1 #sqlhost文件的挂载点，可修改，修改后要和SQLHOSTS_FILE_NAME环境变量一致
+          subPath: sqlhosts.ol_gbasedbt_1
+        - name: conf #配置卷名，跟定义的名称要一致
+          mountPath: /etc/gbasedbt/allowed.surrogates #allowed.surrogates文件的挂载点，不可修改
+          subPath: allowed.surrogates
+      volumes: 
+      - name: data #数据卷定义，卷名称可根据实际修改
+        persistentVolumeClaim:
+          claimName: gbase8s-data #pvc名，跟定义的pvc一致
+      - name: logs #日志卷定义，卷名称可根据实际修改
+        persistentVolumeClaim:
+          claimName: gbase8s-logs #pvc名，跟定义的pvc一致
+      - name: conf #配置卷定义，卷名称可根据实际修改，configmap的名要和创建的configmap一致，key名称要和conf目录下的文件名一致
+        configMap:
+          name: gbase8s-conf
+          items:
+            - key: onconfig.ol_gbasedbt_1
+              path: onconfig.ol_gbasedbt_1
+            - key: sqlhosts.ol_gbasedbt_1
+              path: sqlhosts.ol_gbasedbt_1
+            - key: allowed.surrogates
+              path: allowed.surrogates
+---
+apiVersion: v1
+kind: Service #service定义
+metadata:
+  name: gbase8s #service名称，可根据实际修改
+  labels: #service标签，可根据实际修改
+    name: gbase8s
+spec:
+  type: NodePort #service类型
+  ports:
+  - name: onsoctcp
+    port: 9088 #service暴露在cluster ip上的端口，通过service:port可连数据库，可根据实际修改
+    targetPort: 9088 #pod上的端口，不可修改
+    nodePort: 31111 #集群内每个节点暴露的端口，通过nodeIP:nodePort可连数据库，可根据实际修改
+  - name: drsoctcp
+    port: 19088
+    targetPort: 19088
+    nodePort: 31112
+  selector: #pod选择器，跟pod名一致
+    name: gbase8s
+---
+apiVersion: v1
+kind: PersistentVolumeClaim #用于数据持久化的pvc定义
+metadata: #pvc名，可根据实际修改
+  name: gbase8s-data
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi #请求存储大小，最好跟pv大小一致
+  selector: #pv标签选择器，跟pv中定义的标签一致
+    matchLabels:
+      name: gbase8s-data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim #用于日志持久化的pvc定义
+metadata: #pvc名，可根据实际修改
+  name: gbase8s-logs
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi #请求的存储大小，最好跟pv大小一致
+  selector: #pv标签选择器，跟pv中定义的标签一致
+    matchLabels:
+      name: gbase8s-logs
+---
+apiVersion: v1
+kind: PersistentVolume #用于数据持久化的pv定义
+metadata:
+  name: gbase8s-data #pv名，可根据实际修改
+  labels: #定义的标签，可根据实际修改
+    name: gbase8s-data
+spec:
+  capacity:
+    storage: 1Gi #提供的存储大小，可根据实际修改
+  accessModes:
+    - ReadWriteMany
+  hostPath: #pv类型，hostpath，提供存储的路径可根据实际修改
+    path: /gbase-data
+---
+apiVersion: v1
+kind: PersistentVolume #用于日志持久化的pv定义
+metadata:
+  name: gbase8s-logs #pv名，可根据实际修改
+  labels: #定义的标签，可根据实际修改
+    name: gbase8s-logs
+spec:
+  capacity:
+    storage: 1Gi #提供的存储大小，可根据实际修改
+  accessModes:
+    - ReadWriteMany
+  hostPath: #pv类型，hostpath，提供存储的路径可根据实际修改
+    path: /gbase-logs
