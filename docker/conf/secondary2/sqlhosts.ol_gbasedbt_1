@@ -1,0 +1,4 @@
+rss_r_server_2 onsoctcp 0.0.0.0 9088
+rss_r_server_dr_2 drsoctcp 0.0.0.0 19088
+
+rss_p_server onsoctcp 172.17.0.2 9088

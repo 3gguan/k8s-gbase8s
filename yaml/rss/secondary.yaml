@@ -1,0 +1,149 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: gbase8s-secondary
+  labels:
+    name: gbase8s-secondary
+spec:
+  replicas: 1
+  selector:
+    name: gbase8s-secondary
+  template:
+    metadata:
+      labels:
+        name: gbase8s-secondary
+    spec:
+      nodeSelector:
+        name: "master"
+      containers:
+      - name: gbase8s-secondary
+        image: gbase8s:8.8
+        securityContext:
+          capabilities:
+            add: ["SYS_ADMIN"]
+        ports:
+        - name: onsoctcp
+          containerPort: 9088
+        - name: drsoctcp
+          containerPort: 19088
+        env:
+        - name: GBASEDBT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: gbase8s-secondary-secret
+              key: password
+        - name: ONCONFIG_FILE_NAME
+          value: /conf/onconfig.ol_gbasedbt_1
+        - name: SQLHOSTS_FILE_NAME
+          value: /conf/sqlhosts.ol_gbasedbt_1
+        - name: DB_LOCALE
+          value: zh_cn.utf8
+        - name: CLIENT_LOCALE
+          value: zh_cn.utf8
+        volumeMounts:
+        - name: data
+          mountPath: /opt/gbase8s/storage
+        - name: logs
+          mountPath: /opt/gbase8s/logs
+        - name: conf
+          mountPath: /conf/onconfig.ol_gbasedbt_1
+          subPath: onconfig.ol_gbasedbt_1
+        - name: conf
+          mountPath: /conf/sqlhosts.ol_gbasedbt_1
+          subPath: sqlhosts.ol_gbasedbt_1
+        - name: conf
+          mountPath: /etc/gbasedbt/allowed.surrogates
+          subPath: allowed.surrogates
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: gbase8s-secondary-data
+      - name: logs
+        persistentVolumeClaim:
+          claimName: gbase8s-secondary-logs
+      - name: conf
+        configMap:
+          name: gbase8s-secondary-conf
+          items:
+            - key: onconfig.ol_gbasedbt_1
+              path: onconfig.ol_gbasedbt_1
+            - key: sqlhosts.ol_gbasedbt_1
+              path: sqlhosts.ol_gbasedbt_1
+            - key: allowed.surrogates
+              path: allowed.surrogates
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gbase8s-secondary
+  labels:
+    name: gbase8s-secondary
+spec:
+  type: NodePort
+  ports:
+  - name: onsoctcp
+    port: 9088
+    targetPort: 9088
+    nodePort: 31113
+  - name: drsoctcp
+    port: 19088
+    targetPort: 19088
+    nodePort: 31114
+  selector:
+    name: gbase8s-secondary
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gbase8s-secondary-data
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  selector:
+    matchLabels:
+      name: gbase8s-secondary-data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gbase8s-secondary-logs
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  selector:
+    matchLabels:
+      name: gbase8s-secondary-logs
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: gbase8s-secondary-data
+  labels:
+    name: gbase8s-secondary-data
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: /gbase/gbase-secondary-data
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: gbase8s-secondary-logs
+  labels:
+    name: gbase8s-secondary-logs
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: /gbase/gbase-secondary-logs

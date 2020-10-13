@@ -80,6 +80,20 @@ prepare_config_file() {
   fi
 }
 
+rss_primary_init() {
+  #使成为主节点
+  echo "111"
+}
+
+rss_secondary_init() {
+  #关闭辅节点服务
+
+  #尝试链接主节点，每隔5s重连，最多重连次数20次
+
+  #从主节点下载备份文件并恢复
+  echo "222"
+}
+
 #main函数
 main() {
 
@@ -111,6 +125,17 @@ main() {
     oninit -vwy
   fi
 
+  #启动配置服务
+  nohup python /server/manage.py runserver 0.0.0.0:8000 &
+
+  if [ "$SERVER_TYPE" = "primary" ]; then
+    #主节点初始化
+	rss_primary_init
+  elif [ "$SERVER_TYPE" = "slave" ]; then
+    #辅节点初始化
+    rss_secondary_init
+  fi
+
   #定期检查oninit是否存在，如果不存在，脚本退出，整个容器退出
   while true
   do
@@ -118,7 +143,7 @@ main() {
     check_health
     if [ $? == 0 ]; then
       echo "oninit exit"
-      exit 0
+#      exit 0
     fi
   done
 }
