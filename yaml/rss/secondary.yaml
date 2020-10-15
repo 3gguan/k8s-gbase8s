@@ -14,7 +14,7 @@ spec:
         name: gbase8s-secondary
     spec:
       nodeSelector:
-        name: "master"
+        name: "node1"
       containers:
       - name: gbase8s-secondary
         image: gbase8s:8.8
@@ -26,6 +26,8 @@ spec:
           containerPort: 9088
         - name: drsoctcp
           containerPort: 19088
+        - name: configport
+          containerPort: 8000
         env:
         - name: GBASEDBT_PASSWORD
           valueFrom:
@@ -89,6 +91,9 @@ spec:
     port: 19088
     targetPort: 19088
     nodePort: 31114
+  - name: configport
+    port: 8000
+    targetPort: 8000
   selector:
     name: gbase8s-secondary
 ---

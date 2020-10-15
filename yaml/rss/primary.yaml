@@ -26,6 +26,8 @@ spec:
           containerPort: 9088
         - name: drsoctcp
           containerPort: 19088
+        - name: configport
+          containerPort: 8000
         env:
         - name: GBASEDBT_PASSWORD
           valueFrom:
@@ -89,6 +91,9 @@ spec:
     port: 19088
     targetPort: 19088
     nodePort: 31112
+  - name: configport
+    port: 8000
+    targetPort: 8000
   selector:
     name: gbase8s-primary
 ---

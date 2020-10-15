@@ -16,10 +16,11 @@ Including another URLconf
 from django.conf.urls import url
 from django.contrib import admin
 
-from service import test, hac
+from service import hac
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^test/', test.hello),
-    url(r'^getTape/', hac.getTape),
+    url(r'^hac/getTape', hac.getTape),
+    url(r'^hac/addTrustHost', hac.addTrustHost),
+	url(r'^hac/connect', hac.connect),
 ]

@@ -87,8 +87,10 @@ rss_primary_init() {
 
 rss_secondary_init() {
   #关闭辅节点服务
+  onmode -ky
 
   #尝试链接主节点，每隔5s重连，最多重连次数20次
+  curl $PRIMARY_SERVICE_NAME:8000/connect
 
   #从主节点下载备份文件并恢复
   echo "222"
