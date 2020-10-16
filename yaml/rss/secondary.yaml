@@ -14,7 +14,7 @@ spec:
         name: gbase8s-secondary
     spec:
       nodeSelector:
-        name: "node1"
+        name: "master"
       containers:
       - name: gbase8s-secondary
         image: gbase8s:8.8
@@ -42,6 +42,8 @@ spec:
           value: zh_cn.utf8
         - name: CLIENT_LOCALE
           value: zh_cn.utf8
+        - name: PRIMARY_SERVER_NAME
+          value: rss_p_server
         volumeMounts:
         - name: data
           mountPath: /opt/gbase8s/storage

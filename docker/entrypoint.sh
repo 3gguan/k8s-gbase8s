@@ -90,7 +90,18 @@ rss_secondary_init() {
   onmode -ky
 
   #尝试链接主节点，每隔5s重连，最多重连次数20次
-  curl $PRIMARY_SERVICE_NAME:8000/connect
+  if [ -n "$PRIMARY_SERVER_NAME" ]; then
+    #根据PRIMARY_SERVER_NAME变量值查找sqlhost中对应的service name
+	SERVICE_NAME=cat $GBASEDBTDIR/etc/$sqlhosts_file | grep -w $PRIMARY_SERVER_NAME | awk '{print $3}'
+	curl $SERVICE_NAME:8000/connect
+  else
+	echo "PRIMARY_SERVER_NAME not exists"
+    exit 0
+  fi
+
+  #添加互信
+
+  #通知主节点添加本机为辅节点
 
   #从主节点下载备份文件并恢复
   echo "222"

@@ -203,8 +203,8 @@ ONDBSPACEDOWN 2
 ###################################################################
 
 SERVERNUM 100
-DBSERVERNAME rss_r_server_1
-DBSERVERALIASES rss_r_server_dr_1
+DBSERVERNAME rss_s_server_1
+DBSERVERALIASES rss_s_server_dr_1
 FULL_DISK_INIT 0
 
 ###################################################################
