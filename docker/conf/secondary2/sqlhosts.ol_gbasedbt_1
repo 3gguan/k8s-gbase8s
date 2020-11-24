@@ -1,4 +1,0 @@
-rss_s_server_2 onsoctcp 0.0.0.0 9088
-rss_s_server_dr_2 drsoctcp 0.0.0.0 19088
-
-rss_p_server onsoctcp gbase8s-primary 9088
