@@ -1,0 +1,151 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: local-volume-m-12
+  labels:
+    pvname: local-volume-m-12
+spec:
+  capacity:
+    storage: 2Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-volume
+  local:
+    path: /local/local12
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - node1
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: local-volume-m-1
+  labels:
+    pvname: local-volume-m-1
+spec:
+  capacity:
+    storage: 3Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-volume
+  local:
+    path: /local/local1
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - master
+
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: local-volume-a-gbase8s-cluster-0
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3Gi
+  storageClassName: local-volume
+  selector:
+    matchExpressions:
+    - key: pvname
+      operator: In
+      values:
+      - local-volume-m-1
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: local-volume-m-2
+  labels:
+    pvname: local-volume-m-2
+spec:
+  capacity:
+    storage: 2Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-volume
+  local:
+    path: /local/local2
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - master
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: local-volume-a-gbase8s-cluster-1
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: local-volume
+  selector:
+    matchLabels:
+      pvname: local-volume-m-2
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: local-volume-n-1
+  labels:
+    pvname: local-volume-n-1
+spec:
+  capacity:
+    storage: 2Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-volume
+  local:
+    path: /local/local3
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - master
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: local-volume-a-gbase8s-cluster-2
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: local-volume
+  selector:
+    matchLabels:
+      pvname: local-volume-n-1
+

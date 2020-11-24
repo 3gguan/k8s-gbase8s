@@ -1,0 +1,9 @@
+gbase8s-cluster-0.gbase8s-cluster.default.svc.cluster.local gbasedbt
+gbase8s-cluster-1.gbase8s-cluster.default.svc.cluster.local gbasedbt
+gbase8s-cluster-2.gbase8s-cluster.default.svc.cluster.local gbasedbt
+gbase8s-cm-0.gbase8s-cm.default.svc.cluster.local gbasedbt
+
+gbase8s-cluster-0 gbasedbt
+gbase8s-cluster-1 gbasedbt
+gbase8s-cluster-2 gbasedbt
+gbase8s-cm-0 gbasedbt

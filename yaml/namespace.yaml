@@ -1,0 +1,6 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: gbase8s
+  labels:
+    name: gbase8s  

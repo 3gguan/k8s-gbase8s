@@ -1,0 +1,97 @@
+###########################################################################
+#
+#  GBASE 
+#  Licensed Material - Property Of GBASE 
+#  Copyright General Data Corporation 2014, 2015
+#
+# Example Connection Manager configuration file setting for a
+# High-availability cluster.
+#
+# See also the sqlhosts.sqlhosts.cmsm.sample file.
+###########################################################################
+
+###########################################################################
+# Global Configuration Parameters
+###########################################################################
+# NAME: The Connection Manager instance name.
+#--------------------------------------------------------------------------
+# LOGFILE: The filename and path of the instance log file.
+#--------------------------------------------------------------------------
+# MACRO: The name of a macro, followed by the macro definition.
+###########################################################################
+
+NAME		cm1
+LOGFILE		${GBASEDBTDIR}/tmp/cm1.log
+
+###########################################################################
+# Settings for a High-Availability Cluster Connection Unit
+###########################################################################
+# CLUSTER: Define a cluster connection unit.
+#--------------------------------------------------------------------------
+# GBASEDBTSERVER: Specify servers to connect to during Connection Manager
+#                 initialization.
+#--------------------------------------------------------------------------
+# SLA: Specifies the redirection policy for client requests. For example:
+#
+#       1) Route client requests to the primary server only.
+#
+#          SLA oltp_w   DBSERVERS=primary
+#
+#       2) Route DRDA client requests to the primary server only.
+#
+#          SLA oltpdr_w DBSERVERS=primary 
+#
+#       3) Route client requests to the HDR or SDS server with the lowest
+#          workload.
+#
+#          SLA report_w DBSERVERS=(HDR,SDS)
+#
+#       4) Route client requests to the HDR or SDS server in round-robin fashion.
+#
+#          SLA report_rr_w DBSERVERS=(HDR,SDS) POLICY=ROUNDROBIN
+#
+#          The ROUNDROBIN policy can be used with the following definitions:
+#            - CLUSTER
+#            - GRID
+#            - REPLSET
+#            - SERVERSET
+#
+#       5) Route client requests to the RSS server whose last applied logical-log
+#          page is not more than 5,500 pages behind the primary server's 
+#          current logical log position and who has the lowest workload.
+#
+#          SLA current_rss_w DBSERVERS=RSS \
+#              POLICY=SECAPPLYBACKLOG:5500+WORKLOAD
+#
+#          SECAPPLYBACKLOG is supported only in CLUSTER connection units.
+#
+#       6) Same configuration as example 5, but route client requests
+#          round-robin, rather than based on workload.
+#
+#          SLA current_rss_rr_w DBSERVERS=RSS \
+#              POLICY=SECAPPLYBACKLOG:5500+ROUNDROBIN
+#
+#--------------------------------------------------------------------------
+# FOC: Specify failover configuration.
+#      --------------------------------------------------------------------
+#      ORDER: Specify the server that receives failover if the primary
+#      server fails. This setting is deprecated. Use the server's
+#      HA_FOC_ORDER configuration parameter, instead.
+#      --------------------------------------------------------------------
+#      PRIORITY: Specify Connection Managers' priority for arbitrating
+#      failover. The Connection Manager with the lowest PRIORITY
+#      value is the active arbitrator.
+#--------------------------------------------------------------------------
+# CMALARMPROGRAM: Specify the path and filename of a program or script
+#                 that runs if an error occurs during failover.
+###########################################################################
+
+CLUSTER	g_west 
+{
+  GBASEDBTSERVER	g_west	
+
+  SLA oltp 	       DBSERVERS=PRI+RSS WORKERS=16
+
+  FOC ORDER=ENABLED TIMEOUT=10 RETRY=1 PRIORITY=1
+}
+

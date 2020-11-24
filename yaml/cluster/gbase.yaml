@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gbase8s-cluster1
+  #labels:
+    #gbase8s-app: gbase8s-cluster
+spec:
+  ports:
+  - port: 9088
+    name: onsoctcp 
+  clusterIP: None
+  selector:
+    gbase8s-app: gbase8s-cluster
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: gbase8s-cluster
+  ownerReferences:
+  - apiVersion: gbase8s.gbase.cn/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: Gbase8sCluster
+    name: gbase8scluster-sample
+    uid: 6e8b8eed-25b0-4881-9fcc-9e8eaa87a567
+spec:
+  serviceName: "gbase8s-cluster"
+  replicas: 3
+  selector:
+    matchLabels:
+      gbase8s-app: gbase8s-cluster
+  template:
+    metadata:
+      labels:
+        gbase8s-app: gbase8s-cluster
+    spec:
+      containers:
+      - name: gbase8s
+        image: gbase8s:8.8
+        securityContext:
+          capabilities:
+            add: ["SYS_ADMIN"]
+        ports:
+        - containerPort: 9088
+          name: onsoctcp
+  #      volumeMounts:
+  #      - name: local-volume-a
+  #        mountPath: /opt/gbase8s/storage
+  #volumeClaimTemplates:
+  #- metadata:
+  #    name: local-volume-a
+  #  spec:
+  #    accessModes: [ "ReadWriteOnce" ]
+  #    storageClassName: "local-volume"
+      #resources:
+      #  requests:
+      #    storage: 2Gi

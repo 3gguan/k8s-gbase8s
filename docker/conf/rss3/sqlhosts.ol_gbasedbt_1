@@ -1,0 +1,6 @@
+rss3 onsoctcp 0.0.0.0 9088
+rss3_dr drsoctcp 0.0.0.0 19088
+
+rss0 onsoctcp 172.17.0.2 9088
+rss1 onsoctcp 172.17.0.3 9088
+rss2 onsoctcp 172.17.0.4 9088

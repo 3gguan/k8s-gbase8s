@@ -29,6 +29,8 @@ spec:
         - name: configport
           containerPort: 8000
         env:
+        - name: SERVER_TYPE
+          value: primary
         - name: GBASEDBT_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -43,6 +45,8 @@ spec:
         - name: CLIENT_LOCALE
           value: zh_cn.utf8
         volumeMounts:
+        - name: server
+          mountPath: /server
         - name: data
           mountPath: /opt/gbase8s/storage
         - name: logs
@@ -57,6 +61,9 @@ spec:
           mountPath: /etc/gbasedbt/allowed.surrogates
           subPath: allowed.surrogates
       volumes:
+      - name: server
+        hostPath:
+          path: /root/work/k8s-gbase8s/docker/server
       - name: data
         persistentVolumeClaim:
           claimName: gbase8s-primary-data
@@ -94,6 +101,7 @@ spec:
   - name: configport
     port: 8000
     targetPort: 8000
+    nodePort: 32000
   selector:
     name: gbase8s-primary
 ---

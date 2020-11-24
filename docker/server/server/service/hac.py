@@ -97,13 +97,14 @@ def addTrustHost(request):
 		logger.info(ip)
 		
 		try:
-			hostName = socket.gethostbyaddr(ip)
+			hostName = socket.gethostbyaddr(ip)[0]
 		except Exception, e:
 			logger.error(str(e))
 			hostName = ip
 
 		#获取serverName
 		try:
+			logger.info(request.body)
 			jsonBody = json.loads(request.body)
 			logger.info(jsonBody)
 			serverName = jsonBody['serverName']
@@ -113,11 +114,17 @@ def addTrustHost(request):
 
 		ret = addTrustHostToFile(serverName, hostName)
 		if ret != -1:	
-			return HttpResponse(Resp('0', '添加信任主机成功', None).toJsonString(), content_type='application/json')
+			localHostName = socket.gethostname()
+			localIp = socket.gethostbyname(localHostName)
+			return HttpResponse(Resp('0', '添加信任主机成功', localIp).toJsonString(), content_type='application/json')
 		else:
 			return HttpResponse(Resp('-1', '添加信任主机失败', None).toJsonString(), content_type='application/json')
 	else:
 		return HttpResponse(Resp('-1', 'method error', None), content_type='application/json')
+
+@csrf_exempt
+def addSecondary(request):
+	return HttpResponse("aaa")
 
 def connect(request):
 	if request.method == 'GET':

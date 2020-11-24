@@ -203,8 +203,8 @@ ONDBSPACEDOWN 2
 ###################################################################
 
 SERVERNUM 100
-DBSERVERNAME ol_gbasedbt_1
-DBSERVERALIASES dr_gbasedbt_1
+DBSERVERNAME rss3
+DBSERVERALIASES rss3_dr
 FULL_DISK_INIT 0
 
 ###################################################################
@@ -1526,7 +1526,7 @@ MQCHLTAB
 
 REMOTE_SERVER_CFG hostfile
 REMOTE_USERS_CFG hostuser
-S6_USE_REMOTE_SERVER_CFG  1
+S6_USE_REMOTE_SERVER_CFG 1
 
 ####################################################################
 # Low Memory Parameter

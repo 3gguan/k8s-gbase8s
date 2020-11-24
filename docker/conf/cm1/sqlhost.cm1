@@ -1,0 +1,9 @@
+# GBASEDBTSERVER
+g_west          group           -       -       i=10
+gbase8s_cluster_0            onsoctcp        gbase8s-cluster-0.gbase8s-cluster.default.svc.cluster.local              9088    g=g_west
+gbase8s_cluster_1            onsoctcp        gbase8s-cluster-1.gbase8s-cluster.default.svc.cluster.local              9088    g=g_west
+gbase8s_cluster_2            onsoctcp        gbase8s-cluster-2.gbase8s-cluster.default.svc.cluster.local              9088    g=g_west
+
+# CM SLAs
+cm_update      group      -   -      i=12,c=0
+oltp            onsoctcp        gbase8s-cm-0.gbase8s-cm.default.svc.cluster.local         9910 g=cm_update

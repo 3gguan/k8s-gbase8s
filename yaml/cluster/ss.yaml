@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gbase8s-cluster
+  labels:
+    app: gbase8s-cluster
+spec:
+  ports:
+  - port: 9088
+    name: onsoctcp 
+  clusterIP: None
+  selector:
+    app: gbase8s-cluster 
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: gbase8s-cluster
+spec:
+  serviceName: "gbase8s-cluster"
+  replicas: 3
+  selector:
+    matchLabels:
+      app: gbase8s-cluster
+  template:
+    metadata:
+      labels:
+        app: gbase8s-cluster
+    spec:
+      containers:
+      - name: gbase8s
+        image: gbase8s:8.8
+        ports:
+        - containerPort: 9088
+          name: onsoctcp
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gbase8s-cm
+  labels:
+    app: gbase8s-cm
+spec:
+  ports:
+  - port: 9088
+    name: onsoctcp 
+  clusterIP: None
+  selector:
+    app: gbase8s-cm
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: gbase8s-cm
+spec:
+  serviceName: "gbase8s-cluster"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gbase8s-cm
+  template:
+    metadata:
+      labels:
+        app: gbase8s-cm
+    spec:
+      containers:
+      - name: cm
+        image: gbase8s:8.8
+        ports:
+        - containerPort: 9088
+          name: onsoctcp

@@ -23,4 +23,5 @@ urlpatterns = [
     url(r'^hac/getTape', hac.getTape),
     url(r'^hac/addTrustHost', hac.addTrustHost),
 	url(r'^hac/connect', hac.connect),
+	url(r'^hac/addSecondary', hac.connect),
 ]
