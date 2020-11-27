@@ -68,7 +68,7 @@ prepare_config_file() {
       chown gbasedbt:gbasedbt $GBASEDBTDIR/etc/$onconfig_file
       sed -i "0,/ONCONFIG=*.*/s/ONCONFIG=*.*/ONCONFIG=$onconfig_file/" /env.sh
       temp=`sed -n "/^[[:space:]]*DBSERVERNAME[[:space:]]*/p" $GBASEDBTDIR/etc/$onconfig_file` 
-      sed -i "0,/GBASEDBTSERVER=*.*/s/GBASEDBTSERVER=*.*/GBASEDBTSERVER=${temp##* }/" /env.sh
+      sed -i "0,/GBASEDBTSERVER=*.*/s/GBASEDBTSERVER=*.*/GBASEDBTSERVER=${temp##*[[:space:]]}/" /env.sh
     else
       echo "onconfig file not exists"
     fi
@@ -215,6 +215,9 @@ main() {
   #修改用户及用户组
   change_permissions
 
+  #启动配置服务
+  nohup python /server/manage.py runserver 0.0.0.0:8000 &
+
   #如果rootdbs已经存在，表示数据库实例已经初始化过，直接启动oninit
   #如果不存在，就需要初始化数据库实例
   if [ -f $GBASEDBTDIR/storage/rootdbs ]; then
@@ -227,9 +230,6 @@ main() {
     onclean -ky
     oninit -vwy
   fi
-
-  #启动配置服务
-  nohup python /server/manage.py runserver 0.0.0.0:8000 &
 
 #  if [ "$SERVER_TYPE" = "primary" ]; then
     #主节点初始化

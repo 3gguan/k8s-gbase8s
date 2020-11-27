@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cm
+  #labels:
+    #gbase8s-app: gbase8s-cluster
+spec:
+  ports:
+  - port: 9910
+    name: onsoctcp 
+  clusterIP: None
+  selector:
+    gbase8s-app: cm
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cm
+#  ownerReferences:
+#  - apiVersion: gbase8s.gbase.cn/v1
+#    blockOwnerDeletion: true
+#    controller: true
+#    kind: Gbase8sCluster
+#    name: gbase8scluster-sample
+#    uid: 6e8b8eed-25b0-4881-9fcc-9e8eaa87a567
+spec:
+  serviceName: "cm"
+  replicas: 1
+  selector:
+    matchLabels:
+      gbase8s-app: cm
+  template:
+    metadata:
+      labels:
+        gbase8s-app: cm
+    spec:
+      containers:
+      - name: cm
+        image: cm:8.8
+        securityContext:
+          capabilities:
+            add: ["SYS_ADMIN"]
+        ports:
+        - containerPort: 9910
+          name: onsoctcp
