@@ -35,27 +35,13 @@ check_health() {
 #就拷贝指定的配置文件到$GBASEDBTDIR/etc/下，并修改env.sh中配置文件的路径和名称
 #从onconfig文件中读取数据库实例名，修改env.sh中的对应变量
 prepare_config_file() {
-  if [ -n "$ONCONFIG_FILE_NAME" ]; then
-    if [ -f $ONCONFIG_FILE_NAME ]; then
-      onconfig_file=${ONCONFIG_FILE_NAME##*/}
-      \cp $ONCONFIG_FILE_NAME $GBASEDBTDIR/etc/$onconfig_file
-      chown gbasedbt:gbasedbt $GBASEDBTDIR/etc/$onconfig_file
-      sed -i "0,/ONCONFIG=*.*/s/ONCONFIG=*.*/ONCONFIG=$onconfig_file/" /env.sh
-      temp=`sed -n "/^[[:space:]]*DBSERVERNAME[[:space:]]*/p" $GBASEDBTDIR/etc/$onconfig_file` 
-      sed -i "0,/GBASEDBTSERVER=*.*/s/GBASEDBTSERVER=*.*/GBASEDBTSERVER=${temp##* }/" /env.sh
+  if [ -n "$CONF_FILE_NAME" ]; then
+    if [ -f $CONF_FILE_NAME ]; then
+      conf_file=${CONF_FILE_NAME##*/}
+      \cp $CONF_FILE_NAME $GBASEDBTDIR/etc/cfg.cm
+      chown gbasedbt:gbasedbt $GBASEDBTDIR/etc/cfg.cm
     else
-      echo "onconfig file not exists"
-    fi
-  fi
-
-  if [ -n "$SQLHOSTS_FILE_NAME" ]; then
-    if [ -f $SQLHOSTS_FILE_NAME ]; then
-      sqlhosts_file=${SQLHOSTS_FILE_NAME##*/}
-      \cp $SQLHOSTS_FILE_NAME $GBASEDBTDIR/etc/$sqlhosts_file
-      chown gbasedbt:gbasedbt $GBASEDBTDIR/etc/$sqlhosts_file
-      sed -i "0,/GBASEDBTSQLHOSTS=*.*/s/GBASEDBTSQLHOSTS=*.*/GBASEDBTSQLHOSTS=\$GBASEDBTDIR\/etc\/$sqlhosts_file/" /env.sh
-    else
-      echo "sqlhosts file not exists"
+      echo "conf file not exists"
     fi
   fi
 }
@@ -63,12 +49,13 @@ prepare_config_file() {
 modify_server_name() {
 	temp_name_host=`hostname`
 	temp_name=${temp_name_host//-/_}
-	sed -i "0,/GBASEDBTSERVER=*.*/s/GBASEDBTSERVER=*.*/GBASEDBTSERVER=$temp_name/" /env.sh
-	sed -i "0,/^[[:space:]]*DBSERVERNAME*.*/s/^[[:space:]]*DBSERVERNAME*.*/DBSERVERNAME $temp_name/" $GBASEDBTDIR/etc/$ONCONFIG
-	sed -i "0,/^[[:space:]]*DBSERVERALIASES*.*/s/^[[:space:]]*DBSERVERALIASES*.*/DBSERVERALIASES dr_$temp_name/" $GBASEDBTDIR/etc/$ONCONFIG
-	echo "$temp_name onsoctcp $temp_name_host 9088" > $GBASEDBTSQLHOSTS
-	echo "dr_$temp_name drsoctcp $temp_name_host 19088" >> $GBASEDBTSQLHOSTS
-	#sed -i "/\${DBSERVERNAME}/s/\${DBSERVERNAME}/$temp_name/g" $GBASEDBTSQLHOSTS
+	sed -i "/\${CM_NAME}/s/\${CM_NAME}/$temp_name/g" $GBASEDBTDIR/etc/cfg.cm
+	priority=$((${temp_name_host##*-} + 1))
+	sed -i "/\${PRIORITY}/s/\${PRIORITY}/$priority/g" $GBASEDBTDIR/etc/cfg.cm
+}
+
+change_permission() {
+  chown gbasedbt:gbasedbt $GBASEDBTDIR/logs
 }
 
 #main函数
@@ -80,13 +67,15 @@ main() {
   #引入环境变量
   import_env
 
+  change_permission
+
   #准备配置文件
-#  prepare_config_file
+  prepare_config_file
 
   #修改服务名
-  #if [ -n "$AUTO_SERVER_NAME" -a "$AUTO_SERVER_NAME" == "1" ]; then
-  #  modify_server_name
-  #fi
+  if [ -n "$AUTO_SERVER_NAME" -a "$AUTO_SERVER_NAME" == "1" ]; then
+    modify_server_name
+  fi
 
   if [ -n "$START_MANUAL" -a "$START_MANUAL" == "1" ]; then
     echo "0" > check.conf

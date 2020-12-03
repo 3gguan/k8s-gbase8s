@@ -20,8 +20,13 @@
 # MACRO: The name of a macro, followed by the macro definition.
 ###########################################################################
 
-NAME		cm_0
-LOGFILE		${GBASEDBTDIR}/logs/cm_0.log
+NAME		${CM_NAME}
+LOGFILE		${GBASEDBTDIR}/logs/${CM_NAME}.log
+
+CM_TIMEOUT 30
+EVENT_TIMEOUT 20
+SECONDARY_EVENT_TIMEOUT 30
+
 
 ###########################################################################
 # Settings for a High-Availability Cluster Connection Unit
@@ -90,9 +95,9 @@ CLUSTER	g_cluster
 {
   GBASEDBTSERVER	g_cluster
 
-  SLA cm_0_redirect 	       DBSERVERS=PRI+RSS WORKERS=16
-  SLA cm_0_proxy 	       DBSERVERS=PRI+RSS WORKERS=16 MODE=PROXY
+  SLA redirect_${CM_NAME}      DBSERVERS=PRI+RSS WORKERS=16
+  SLA proxy_${CM_NAME}        DBSERVERS=PRI+RSS WORKERS=16 MODE=PROXY
 
-  FOC ORDER=ENABLED TIMEOUT=10 RETRY=1 PRIORITY=1
+  FOC ORDER=ENABLED TIMEOUT=0 RETRY=5 PRIORITY=${PRIORITY}
 }
 
