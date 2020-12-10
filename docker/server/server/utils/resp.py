@@ -6,10 +6,5 @@ class Resp():
 		self.message = message
 		self.data = data
 
-	def toDict(self):
-		dict = {}
-		dict.update(self.__dict__)
-		return dict
-
 	def toJsonString(self):
-		return json.dumps(self.toDict(), ensure_ascii=False)
+		return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)

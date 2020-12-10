@@ -122,7 +122,8 @@ STATIC_URL = '/static/'
 
 
 cur_path = os.path.dirname(os.path.realpath(__file__))
-log_path = os.path.join(os.path.dirname(cur_path), 'logs')
+#log_path = os.path.join(os.path.dirname(cur_path), 'logs')
+log_path = os.path.join('/opt/gbase8s/logs/', 'alogs')
 if not os.path.exists(log_path): os.mkdir(log_path)
 LOGGING = {
 	'version': 1,

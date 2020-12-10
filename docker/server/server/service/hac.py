@@ -4,8 +4,10 @@ from django.http import HttpResponse, StreamingHttpResponse, JsonResponse
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 import logging
-import os,socket,fcntl,json
+import os,socket,fcntl,json,subprocess
 from ..utils.resp import Resp
+from exec_result import ExecResult
+
 
 logger = logging.getLogger('log')
 
@@ -131,3 +133,29 @@ def connect(request):
 		return JsonResponse(Resp('0', 'connect success', None).toDict())
 	else:
 		return JsonResponse(Resp('-1', 'method error', None).toDict())
+
+@csrf_exempt
+def getStatus(request):
+	if request.method == 'GET':
+		ret = os.popen('source /env.sh && onstat -g rss verbose').read()
+		return HttpResponse(Resp('0', '获取oninit状态成功', ret).toJsonString(), content_type='application/json')
+	else:
+		return HttpResponse(Resp('-1', 'method error', None), content_type='application/json')
+
+@csrf_exempt
+def execCmd(request):
+	if request.method == 'POST':
+		try:
+			jsonBody = json.loads(request.body)
+			logger.info(jsonBody)
+			cmd = jsonBody['cmd']
+			proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=-1)
+			proc.wait()
+			err = proc.stderr.read()
+			out = proc.stdout.read()	
+			return HttpResponse(Resp('0', 'success', ExecResult(out, err)).toJsonString(), content_type='application/json')
+		except Exception, e:
+			logger.error(str(e))
+			return HttpResponse(Resp('-1', str(e), None).toJsonString(), content_type='application/json')
+	else:
+		return HttpResponse(Resp('-1', 'method error', None), content_type='application/json')

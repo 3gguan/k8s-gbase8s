@@ -22,6 +22,8 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^hac/getTape', hac.getTape),
     url(r'^hac/addTrustHost', hac.addTrustHost),
-	url(r'^hac/connect', hac.connect),
-	url(r'^hac/addSecondary', hac.connect),
+    url(r'^hac/connect', hac.connect),
+    url(r'^hac/addSecondary', hac.connect),
+    url(r'^hac/getStatus', hac.getStatus),
+    url(r'^hac/exec', hac.execCmd),
 ]
