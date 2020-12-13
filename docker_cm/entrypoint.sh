@@ -48,8 +48,11 @@ prepare_config_file() {
 
 modify_server_name() {
 	temp_name_host=`hostname`
-	temp_name=${temp_name_host//-/_}
-	sed -i "/\${CM_NAME}/s/\${CM_NAME}/$temp_name/g" $GBASEDBTDIR/etc/cfg.cm
+	sequence_num=${temp_name_host##*-}
+	redirect_temp_name=${REDIRECT_CM_NAME}_${sequence_num}
+	proxy_temp_name=${PROXY_CM_NAME}_${sequence_num}
+	sed -i "/\${REDIRECT_CM_NAME}/s/\${REDIRECT_CM_NAME}/$redirect_temp_name/g" $GBASEDBTDIR/etc/cfg.cm
+	sed -i "/\${PROXY_CM_NAME}/s/\${PROXY_CM_NAME}/$proxy_temp_name/g" $GBASEDBTDIR/etc/cfg.cm
 	priority=$((${temp_name_host##*-} + 1))
 	sed -i "/\${PRIORITY}/s/\${PRIORITY}/$priority/g" $GBASEDBTDIR/etc/cfg.cm
 }
