@@ -20,8 +20,8 @@
 # MACRO: The name of a macro, followed by the macro definition.
 ###########################################################################
 
-NAME		${CM_NAME}
-LOGFILE		${GBASEDBTDIR}/logs/${CM_NAME}.log
+NAME		cm
+LOGFILE		${GBASEDBTDIR}/logs/cm.log
 
 CM_TIMEOUT 30
 EVENT_TIMEOUT 20

@@ -215,21 +215,20 @@ main() {
   #修改用户及用户组
   change_permissions
 
-  #启动配置服务
-  nohup python /server/manage.py runserver 0.0.0.0:8000 &
-
   #如果rootdbs已经存在，表示数据库实例已经初始化过，直接启动oninit
   #如果不存在，就需要初始化数据库实例
   if [ -f $GBASEDBTDIR/storage/rootdbs ]; then
     oninit -vwy
   else
-    create_dbspaces
-    oninit -iwvy
-    init_dbspaces
-    onmode -ky
-    onclean -ky
-    oninit -vwy
+    create_dbspaces && oninit -iwvy && init_dbspaces && onmode -ky && onclean -ky && oninit -vwy
   fi
+
+  if [ $? != 0 ]; then
+    exit 0
+  fi
+
+  #启动配置服务
+  nohup python /server/manage.py runserver 0.0.0.0:8000 &
 
 #  if [ "$SERVER_TYPE" = "primary" ]; then
     #主节点初始化

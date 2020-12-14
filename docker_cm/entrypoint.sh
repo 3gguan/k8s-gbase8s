@@ -55,6 +55,7 @@ modify_server_name() {
 	sed -i "/\${PROXY_CM_NAME}/s/\${PROXY_CM_NAME}/$proxy_temp_name/g" $GBASEDBTDIR/etc/cfg.cm
 	priority=$((${temp_name_host##*-} + 1))
 	sed -i "/\${PRIORITY}/s/\${PRIORITY}/$priority/g" $GBASEDBTDIR/etc/cfg.cm
+	sed -i "0,/^[[:space:]]*NAME[[:space:]]*.*/s/^[[:space:]]*NAME[[:space:]]*.*/NAME  cm_${sequence_num}/" $GBASEDBTDIR/etc/cfg.cm
 }
 
 change_permission() {
