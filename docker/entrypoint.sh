@@ -10,26 +10,138 @@ import_env() {
   fi
 }
 
-#初始化数据库实例时创建dbspace
-create_dbspaces() {
-  for i in $DBSPACES;
-  do
-    touch $GBASEDBTDIR/storage/$i && chmod 660 $GBASEDBTDIR/storage/$i && chown gbasedbt:gbasedbt $GBASEDBTDIR/storage/$i
-  done
+create_dbspace_file() {
+  touch $GBASEDBTDIR/storage/$1 
+  chmod 660 $GBASEDBTDIR/storage/$1
+  chown gbasedbt:gbasedbt $GBASEDBTDIR/storage/$1
 }
 
-#初始化dbspace
-init_dbspaces() {
-  for i in $DBSPACES;
+to_kb() {
+  case $1 in
+  [0-9]*M)
+    echo $(( ${1%M}*1024 ))
+  ;;
+  [0-9]*G)
+    echo $(( ${1%G}*1024*1024 ))
+  ;;
+  [0-9]*)
+    echo $1
+  ;;
+  [0-9]*K)
+    echo $1
+  ;;
+  *)
+    echo "error"
+  esac
+}
+
+get_free_space() {
+  path=$(echo $1 | sed -e 's/\//\\\//g')
+  free=`onstat -d | sed -n "/**$path[[:space:]]*/p" | awk '{print $6}'`
+  echo $(( $free*2 ))
+}
+
+modify_temp_dbspace() {
+  n=`onstat -D | awk '{if($8~"T") print $10}'`
+
+  for i in $n
   do
-    if [ $i != "rootdbs" ]; then
-    onspaces -c -d $i -p $GBASEDBTDIR/storage/$i -o 0 -s 65536
+    if [ -n "$e" ]; then
+      e=$e:$i
+    else
+      e=$i
     fi
   done
+  onmode -wf DBSPACETEMP=$e
 }
 
-#初始化时需要创建的dbspace
-DBSPACES="rootdbs plogdbs llogdbs tmpdbs01 tmpdbs02 datadbs01 datadbs02 datadbs03 datadbs04 datadbs05 datadbs06 datadbs07 datadbs08"
+#初始化dbspaces
+init_dbspaces() {
+  #初始化plog space
+  TEMP_SIZE=`to_kb 128M`
+  if [ -n "$INIT_PLOG_SIZE" ]; then
+    TEMP_SIZE=`to_kb $INIT_PLOG_SIZE` 
+  fi
+  if [ $TEMP_SIZE = "error" ]; then
+    echo "INIT_PLOG_SIZE error" 
+    return 1
+  fi
+  create_dbspace_file init_plog
+  onspaces -c -P init_plog -p $GBASEDBTDIR/storage/init_plog -o 0 -s $TEMP_SIZE
+
+  #初始化llog space
+  TEMP_SIZE=`to_kb 128M`
+  if [ -n "$INIT_LLOG_SIZE" ]; then
+    TEMP_SIZE=`to_kb $INIT_LLOG_SIZE`
+  fi
+  if [ $TEMP_SIZE = "error" ]; then
+    echo "INIT_LLOG_SIZE error"
+    return 1
+  fi
+  create_dbspace_file init_llog
+  onspaces -c -d init_llog -p $GBASEDBTDIR/storage/init_llog -o 0 -s $TEMP_SIZE
+  free=`get_free_space $GBASEDBTDIR/storage/init_llog`
+  onparams -a -d init_llog -s $free
+  
+  #初始化temp space
+  TEMP_SIZE=`to_kb 64M`
+  TEMP_COUNT=2
+  if [ -n "$INIT_TEMP_SIZE" ]; then
+    TEMP_SIZE=`to_kb $INIT_TEMP_SIZE`
+  fi
+  if [ $TEMP_SIZE = "error" ]; then
+    echo "INIT_TEMP_SIZE error"
+    return 1
+  fi
+  if [ -n "$INIT_TEMP_COUNT" ]; then
+    TEMP_COUNT=$INIT_TEMP_COUNT
+  fi
+  for((i=0;i<$TEMP_COUNT;i++));
+  do
+    create_dbspace_file init_temp$i
+    onspaces -c -d init_temp$i -t -p $GBASEDBTDIR/storage/init_temp$i -o 0 -s $TEMP_SIZE
+  done
+
+  #初始化data space
+  TEMP_SIZE=`to_kb 256M`
+  if [ -n "$INIT_DATA_SIZE" ]; then
+    TEMP_SIZE=`to_kb $INIT_DATA_SIZE`
+  fi
+  if [ $TEMP_SIZE = "error" ]; then
+    echo "INIT_DATA_SIZE error"
+    return 1
+  fi
+  create_dbspace_file init_data
+  onspaces -c -d init_data -p $GBASEDBTDIR/storage/init_data -o 0 -s $TEMP_SIZE
+
+  #初始化blob space
+  TEMP_SIZE=`to_kb 64M`
+  TEMP_PAGE_SIZE=1
+  if [ -n "$INIT_BLOB_SIZE" ]; then
+    TEMP_SIZE=`to_kb $INIT_BLOB_SIZE`
+  fi
+  if [ $TEMP_SIZE = "error" ]; then
+    echo "INIT_BLOB_SIZE error"
+    return 1
+  fi
+  if [ -n "$INIT_BLOB_PAGE_SIZE" ]; then
+    TEMP_PAGE_SIZE=$INIT_BLOB_PAGE_SIZE
+  fi
+  create_dbspace_file init_blob
+  onspaces -c -b init_blob -g $TEMP_PAGE_SIZE -p $GBASEDBTDIR/storage/init_blob -o 0 -s $TEMP_SIZE
+
+  #初始化sblob space
+  TEMP_SIZE=`to_kb 64M`
+  if [ -n "$INIT_SBLOB_SIZE" ]; then
+    TEMP_SIZE=`to_kb $INIT_SBLOB_SIZE`
+  fi
+  if [ $TEMP_SIZE = "error" ]; then
+    echo "INIT_SBLOB_SIZE error"
+    return 1
+  fi
+  create_dbspace_file init_sblob
+  onspaces -c -S init_sblob -p $GBASEDBTDIR/storage/init_sblob -o 0 -s $TEMP_SIZE
+}
 
 #修改用户及用户组
 change_permissions() {
@@ -86,100 +198,6 @@ prepare_config_file() {
   fi
 }
 
-#测试链接主节点，$1:主节点服务地址
-test_connect() {
-  echo $1
-  for ((i=0; i<20; i++))
-  do
-    echo "try to connect to primary"
-	echo "curl -s --connect-timeout 3 $1:$SERVICE_PORT/hac/connect"
-	curl -s --connect-timeout 3 $1:$SERVICE_PORT/hac/connect
-    ret=$?
-    echo $ret 
-    if [ "$ret" = "0" ]; then
-      return 0 
-    fi
-    sleep 5
-  done
-  return 1
-}
-
-# 从json串中获取值。$1:json串 $2:key
-get_json_value() {
-  python -c "import json,sys; obj = json.loads(sys.argv[1]); print obj[sys.argv[2]].encode('utf-8')" "$1" "$2"
-}
-
-# 根据对端ip生存一条hostfile. $1:对端ip
-generate_hostfile_line() {
-  hn=`python -c "
-import sys,socket
-try: 
-	hn = socket.gethostbyaddr(sys.argv[1])[0]
-except Exception, e:
-	hn = sys.argv[1]
-print hn
-" "$1"`
-  echo "$hn gbasedbt"
-}
-
-rss_primary_init() {
-  #使成为主节点
-  echo "i am primary"
-}
-
-rss_secondary_init() {
-  echo "i am secondary"
-
-  SERVICE_PORT=8000
-
-  #关闭辅节点服务
-  onmode -ky
-
-  #尝试链接主节点，每隔5s重连，最多重连次数20次
-  if [ -n "$PRIMARY_SERVER_NAME" ]; then
-    #根据PRIMARY_SERVER_NAME变量值查找sqlhost中对应的service name
-	SERVICE_ADDR=`sed -n "/^[[:space:]]*$PRIMARY_SERVER_NAME[[:space:]]*/p" $GBASEDBTDIR/etc/$sqlhosts_file | awk '{print $3}'`
-	test_connect $SERVICE_ADDR
-	if [ "$?" != "0" ]; then
-      exit 0
-	fi
-  else
-	echo "PRIMARY_SERVER_NAME not exists"
-    exit 0
-  fi
-
-  #添加互信
-  SERVER_NAME=`sed -n "/^[[:space:]]*DBSERVERNAME[[:space:]]*/p" $GBASEDBTDIR/etc/$ONCONFIG | awk '{print $2}'`
-  echo "---------============"
-  echo $SERVER_NAME
-  if [ -n "$SERVER_NAME" ]; then
-	echo "curl -s -v --connect-timeout 3 $SERVICE_ADDR:$SERVICE_PORT/hac/addTrustHost -X POST -d '{"serverName": "'$SERVER_NAME'"}' --header "Content-Type: application/json""
-    temp=`curl -s -v --connect-timeout 3 $SERVICE_ADDR:$SERVICE_PORT/hac/addTrustHost -X POST -d '{"serverName": "'$SERVER_NAME'"}' --header "Content-Type: application/json"`
-	if [[ $temp == \{*} ]]; then
-	  ret_code=`get_json_value "$temp" "code"`
-	  if [ $ret_code != 0 ]; then
-	    get_json_value "$temp" "message"
-		exit 0
-	  else
-	    SECONDARY_IP=`get_json_value "$temp" "data"`
-        hostfile_line=`generate_hostfile_line "$SECONDARY_IP"`
-		echo $hostfile_line > $GBASEDBTDIR/etc/hostfile
-      fi
-	else
-	  echo "add trust host failed"
-	  exit 0
-	fi
-  else
-    echo "SERVER_NAME not exists"
-    exit 0
-  fi
-
-  #通知主节点添加本机为辅节点
-
-  #从主节点下载备份文件并恢复
-  echo "222"
-}
-
 modify_server_name() {
 	temp_name_host=`hostname`
 	temp_name=${temp_name_host//-/_}
@@ -220,23 +238,19 @@ main() {
   if [ -f $GBASEDBTDIR/storage/rootdbs ]; then
     oninit -vwy
   else
-    create_dbspaces && oninit -iwvy && init_dbspaces && onmode -ky && onclean -ky && oninit -vwy
+    create_dbspace_file rootdbs && oninit -iwvy && init_dbspaces
+    #create_dbspaces && oninit -iwvy && init_dbspaces && onmode -ky && onclean -ky && oninit -vwy
   fi
-
+  
   if [ $? != 0 ]; then
     exit 0
   fi
 
+  #修改DBSPACETEMP环境变量
+  modify_temp_dbspace
+
   #启动配置服务
   nohup python /server/manage.py runserver 0.0.0.0:8000 &
-
-#  if [ "$SERVER_TYPE" = "primary" ]; then
-    #主节点初始化
-#	rss_primary_init
-#  elif [ "$SERVER_TYPE" = "secondary" ]; then
-    #辅节点初始化
-#    rss_secondary_init
-#  fi
 
   #定期检查oninit是否存在，如果不存在，脚本退出，整个容器退出
   while true
