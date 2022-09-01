@@ -2,7 +2,7 @@
 
 #引入环境变量
 import_env() {
-  source /env.sh
+  source /scripts/env.sh
 
   if [ -z $GBASEDBTDIR ]; then
     echo "GBASEDBTDIR not exists"
@@ -178,9 +178,9 @@ prepare_config_file() {
       onconfig_file=${ONCONFIG_FILE_NAME##*/}
       \cp $ONCONFIG_FILE_NAME $GBASEDBTDIR/etc/$onconfig_file
       chown gbasedbt:gbasedbt $GBASEDBTDIR/etc/$onconfig_file
-      sed -i "0,/ONCONFIG=*.*/s/ONCONFIG=*.*/ONCONFIG=$onconfig_file/" /env.sh
+      sed -i "0,/ONCONFIG=*.*/s/ONCONFIG=*.*/ONCONFIG=$onconfig_file/" /scripts/env.sh
       temp=`sed -n "/^[[:space:]]*DBSERVERNAME[[:space:]]*/p" $GBASEDBTDIR/etc/$onconfig_file` 
-      sed -i "0,/GBASEDBTSERVER=*.*/s/GBASEDBTSERVER=*.*/GBASEDBTSERVER=${temp##*[[:space:]]}/" /env.sh
+      sed -i "0,/GBASEDBTSERVER=*.*/s/GBASEDBTSERVER=*.*/GBASEDBTSERVER=${temp##*[[:space:]]}/" /scripts/env.sh
     else
       echo "onconfig file not exists"
     fi
@@ -191,7 +191,7 @@ prepare_config_file() {
       sqlhosts_file=${SQLHOSTS_FILE_NAME##*/}
       \cp $SQLHOSTS_FILE_NAME $GBASEDBTDIR/etc/$sqlhosts_file
       chown gbasedbt:gbasedbt $GBASEDBTDIR/etc/$sqlhosts_file
-      sed -i "0,/GBASEDBTSQLHOSTS=*.*/s/GBASEDBTSQLHOSTS=*.*/GBASEDBTSQLHOSTS=\$GBASEDBTDIR\/etc\/$sqlhosts_file/" /env.sh
+      sed -i "0,/GBASEDBTSQLHOSTS=*.*/s/GBASEDBTSQLHOSTS=*.*/GBASEDBTSQLHOSTS=\$GBASEDBTDIR\/etc\/$sqlhosts_file/" /scripts/env.sh
     else
       echo "sqlhosts file not exists"
     fi
@@ -201,7 +201,7 @@ prepare_config_file() {
 modify_server_name() {
 	temp_name_host=`hostname`
 	temp_name=${temp_name_host//-/_}
-	sed -i "0,/GBASEDBTSERVER=*.*/s/GBASEDBTSERVER=*.*/GBASEDBTSERVER=$temp_name/" /env.sh
+	sed -i "0,/GBASEDBTSERVER=*.*/s/GBASEDBTSERVER=*.*/GBASEDBTSERVER=$temp_name/" /scripts/env.sh
 	sed -i "0,/^[[:space:]]*DBSERVERNAME*.*/s/^[[:space:]]*DBSERVERNAME*.*/DBSERVERNAME $temp_name/" $GBASEDBTDIR/etc/$ONCONFIG
 	sed -i "0,/^[[:space:]]*DBSERVERALIASES*.*/s/^[[:space:]]*DBSERVERALIASES*.*/DBSERVERALIASES dr_$temp_name/" $GBASEDBTDIR/etc/$ONCONFIG
 	echo "$temp_name onsoctcp $temp_name_host 9088" > $GBASEDBTSQLHOSTS
@@ -250,7 +250,12 @@ main() {
   modify_temp_dbspace
 
   #启动配置服务
-  nohup python /server/manage.py runserver 0.0.0.0:8000 &
+  nohup /opt/server/apiserver -p /opt/gbase8s/logs/apilogs >/dev/null 2>&1 &
+  curl 127.0.0.1:8080/api/connect
+  if [ $? != 0 ]; then
+    echo "apiserver start failed"
+    exit 0
+  fi
 
   #定期检查oninit是否存在，如果不存在，脚本退出，整个容器退出
   while true
