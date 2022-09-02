@@ -1,8 +1,10 @@
 #!/bin/bash
 
+SCRIPTS_DIR=/scripts
+
 #引入环境变量
 import_env() {
-  source /scripts/env.sh
+  source $SCRIPTS_DIR/env.sh
 
   if [ -z $GBASEDBTDIR ]; then
     echo "GBASEDBTDIR not exists"
@@ -151,12 +153,12 @@ change_permissions() {
 #设置gbasedbt的密码，由GBASEDBT_PASSWORD指定，默认为gbasedbt
 set_gbasedbt_password() {
   temp_password=${GBASEDBT_PASSWORD:-"gbasedbt"} 
-  echo -e "$temp_password\n$temp_password" | passwd gbasedbt
+  echo "gbasedbt:$temp_password" | chpasswd
 }
 
 #检查oninit是否还存在
 check_health() {
-  sw=`cat check.conf`
+  sw=`cat $SCRIPTS_DIR/check.conf`
   if [ "$sw" == "1" ]; then
     if [ `ps -ef | grep oninit | grep -v grep | wc -l` -gt 2 ]; then
       return 1
@@ -178,9 +180,9 @@ prepare_config_file() {
       onconfig_file=${ONCONFIG_FILE_NAME##*/}
       \cp $ONCONFIG_FILE_NAME $GBASEDBTDIR/etc/$onconfig_file
       chown gbasedbt:gbasedbt $GBASEDBTDIR/etc/$onconfig_file
-      sed -i "0,/ONCONFIG=*.*/s/ONCONFIG=*.*/ONCONFIG=$onconfig_file/" /scripts/env.sh
+      sed -i "0,/ONCONFIG=*.*/s/ONCONFIG=*.*/ONCONFIG=$onconfig_file/" $SCRIPTS_DIR/env.sh
       temp=`sed -n "/^[[:space:]]*DBSERVERNAME[[:space:]]*/p" $GBASEDBTDIR/etc/$onconfig_file` 
-      sed -i "0,/GBASEDBTSERVER=*.*/s/GBASEDBTSERVER=*.*/GBASEDBTSERVER=${temp##*[[:space:]]}/" /scripts/env.sh
+      sed -i "0,/GBASEDBTSERVER=*.*/s/GBASEDBTSERVER=*.*/GBASEDBTSERVER=${temp##*[[:space:]]}/" $SCRIPTS_DIR/env.sh
     else
       echo "onconfig file not exists"
     fi
@@ -191,7 +193,7 @@ prepare_config_file() {
       sqlhosts_file=${SQLHOSTS_FILE_NAME##*/}
       \cp $SQLHOSTS_FILE_NAME $GBASEDBTDIR/etc/$sqlhosts_file
       chown gbasedbt:gbasedbt $GBASEDBTDIR/etc/$sqlhosts_file
-      sed -i "0,/GBASEDBTSQLHOSTS=*.*/s/GBASEDBTSQLHOSTS=*.*/GBASEDBTSQLHOSTS=\$GBASEDBTDIR\/etc\/$sqlhosts_file/" /scripts/env.sh
+      sed -i "0,/GBASEDBTSQLHOSTS=*.*/s/GBASEDBTSQLHOSTS=*.*/GBASEDBTSQLHOSTS=\$GBASEDBTDIR\/etc\/$sqlhosts_file/" $SCRIPTS_DIR/env.sh
     else
       echo "sqlhosts file not exists"
     fi
@@ -201,7 +203,7 @@ prepare_config_file() {
 modify_server_name() {
 	temp_name_host=`hostname`
 	temp_name=${temp_name_host//-/_}
-	sed -i "0,/GBASEDBTSERVER=*.*/s/GBASEDBTSERVER=*.*/GBASEDBTSERVER=$temp_name/" /scripts/env.sh
+	sed -i "0,/GBASEDBTSERVER=*.*/s/GBASEDBTSERVER=*.*/GBASEDBTSERVER=$temp_name/" $SCRIPTS_DIR/env.sh
 	sed -i "0,/^[[:space:]]*DBSERVERNAME*.*/s/^[[:space:]]*DBSERVERNAME*.*/DBSERVERNAME $temp_name/" $GBASEDBTDIR/etc/$ONCONFIG
 	sed -i "0,/^[[:space:]]*DBSERVERALIASES*.*/s/^[[:space:]]*DBSERVERALIASES*.*/DBSERVERALIASES dr_$temp_name/" $GBASEDBTDIR/etc/$ONCONFIG
 	echo "$temp_name onsoctcp $temp_name_host 9088" > $GBASEDBTSQLHOSTS
@@ -209,53 +211,94 @@ modify_server_name() {
 	#sed -i "/\${DBSERVERNAME}/s/\${DBSERVERNAME}/$temp_name/g" $GBASEDBTSQLHOSTS
 }
 
+create_root_dbspace_file() {
+  touch $1
+  chmod 660 $1
+  chown gbasedbt:gbasedbt $1
+}
+
+check_api_server_starting() {
+  ret=1
+  for ((i=1; i<5; i++))
+  do
+    sleep 1
+    curl 127.0.0.1:8080/api/connect
+    if [ $? != 0 ]; then
+      continue 
+    else
+      ret=0
+      echo ""
+      break
+    fi
+  done
+  return $ret
+}
+
 #main函数
 main() {
+  echo "starting ..."
+  if [ ! -f /.first_start_over ]; then
+    echo "first start"
+    #设置gbasedbt密码
+    set_gbasedbt_password
 
-  #设置gbasedbt密码
-  set_gbasedbt_password
-
-  #引入环境变量
-  import_env
-
-  #准备配置文件
-  prepare_config_file
-
-  #修改服务名
-  if [ -n "$AUTO_SERVER_NAME" -a "$AUTO_SERVER_NAME" == "1" ]; then
+    #引入环境变量
     import_env
-    modify_server_name
-  fi
+
+    echo "prepare config file"
+    #准备配置文件
+    prepare_config_file
+
+    #修改服务名
+    if [ -n "$AUTO_SERVER_NAME" -a "$AUTO_SERVER_NAME" == "1" ]; then
+      echo "modify server name"
+      import_env
+      modify_server_name
+    fi
   
-  #重新引入环境变量
-  import_env
+    #重新引入环境变量
+    import_env
 
-  #修改用户及用户组
-  change_permissions
+    #修改用户及用户组
+    change_permissions
 
-  #如果rootdbs已经存在，表示数据库实例已经初始化过，直接启动oninit
-  #如果不存在，就需要初始化数据库实例
-  if [ -f $GBASEDBTDIR/storage/rootdbs ]; then
-    oninit -vwy
+    #如果rootdbs已经存在，表示数据库实例已经初始化过，直接启动oninit
+    #如果不存在，就需要初始化数据库实例
+    ROOTDBS_TEMP=$(sed -n -e "s/^[[:space:]]*\(ROOTPATH[[:space:]]*\)\([^\n']*\)\(.*\)$/\2/p" $GBASEDBTDIR/etc/$ONCONFIG)
+    ROOTDBS=$(bash -c "echo $ROOTDBS_TEMP")
+    if [ -f $ROOTDBS ]; then
+      echo "start oninit"
+      su - gbasedbt -c "oninit -vwy"
+    else
+      echo "init dbspaces and start oninit"
+      create_root_dbspace_file $ROOTDBS && su - gbasedbt -c "oninit -iwvy" && init_dbspaces
+      #create_dbspaces && oninit -iwvy && init_dbspaces && onmode -ky && onclean -ky && oninit -vwy
+    fi
+  
+    if [ $? != 0 ]; then
+      exit 0
+    fi
+
+    #修改DBSPACETEMP环境变量
+    modify_temp_dbspace
   else
-    create_dbspace_file rootdbs && oninit -iwvy && init_dbspaces
-    #create_dbspaces && oninit -iwvy && init_dbspaces && onmode -ky && onclean -ky && oninit -vwy
+    echo "restart oninit"
+    import_env
+    su - gbasedbt -c "oninit -vwy"
   fi
-  
-  if [ $? != 0 ]; then
-    exit 0
-  fi
-
-  #修改DBSPACETEMP环境变量
-  modify_temp_dbspace
 
   #启动配置服务
+  echo "start apiserver"
   nohup /opt/server/apiserver -p /opt/gbase8s/logs/apilogs >/dev/null 2>&1 &
-  curl 127.0.0.1:8080/api/connect
+  check_api_server_starting
   if [ $? != 0 ]; then
     echo "apiserver start failed"
     exit 0
   fi
+
+  #标记第一次启动完成
+  touch /.first_start_over
+  echo "start complete"
 
   #定期检查oninit是否存在，如果不存在，脚本退出，整个容器退出
   while true
@@ -272,8 +315,8 @@ main() {
 #关闭oninit，并退出脚本的执行
 close_all()
 {
-  onmode -ky
-  onclean -ky
+  su - gbasedbt -c "onmode -ky"
+  su - gbasedbt -c "onclean -ky"
   for i in `ps -ef|grep sleep|grep -v grep|awk '{print $2}'`
   do
     kill $i

@@ -42,7 +42,7 @@
 ROOTNAME rootdbs
 ROOTPATH $GBASEDBTDIR/storage/rootdbs
 ROOTOFFSET 0
-ROOTSIZE 300000
+ROOTSIZE 512000
 MIRROR 0
 MIRRORPATH $GBASEDBTDIR/tmp/demo_on.root_mirror
 MIRROROFFSET 0
@@ -81,7 +81,7 @@ PHYSBUFF 128
 ###################################################################
 
 LOGFILES 6
-LOGSIZE 10000
+LOGSIZE 51200
 DYNAMIC_LOGS 2
 LOGBUFF 64
 
